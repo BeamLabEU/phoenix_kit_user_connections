@@ -1,7 +1,7 @@
 <div class="container flex flex-col mx-auto px-4 py-6">
   <%!-- Tabs Navigation --%>
-  <div class="flex justify-center mb-6">
-    <div role="tablist" class="tabs tabs-boxed">
+  <div class="mb-6 overflow-x-auto">
+    <div role="tablist" class="tabs tabs-boxed flex-nowrap w-max max-w-full mx-auto">
       <.link
         navigate={PhoenixKit.Utils.Routes.path("/profile/connections?tab=followers")}
         role="tab"
@@ -60,15 +60,15 @@
           <% else %>
             <div class="space-y-3">
               <%= for follow <- @items do %>
-                <div class="flex items-center justify-between p-3 bg-base-200 rounded-lg">
-                  <div class="flex items-center gap-3">
-                    <div class="avatar placeholder">
+                <div class="flex items-center justify-between gap-3 p-3 bg-base-200 rounded-lg">
+                  <div class="flex items-center gap-3 min-w-0">
+                    <div class="avatar placeholder shrink-0">
                       <div class="bg-primary text-primary-content rounded-full w-10">
                         <span class="text-lg">{String.first(follow.follower.email || "?")}</span>
                       </div>
                     </div>
-                    <div>
-                      <p class="font-medium">{follow.follower.email}</p>
+                    <div class="min-w-0">
+                      <p class="font-medium truncate">{follow.follower.email}</p>
                       <p class="text-sm text-base-content/50">
                         Followed you <.time_ago datetime={follow.inserted_at} />
                       </p>
@@ -97,22 +97,22 @@
           <% else %>
             <div class="space-y-3">
               <%= for follow <- @items do %>
-                <div class="flex items-center justify-between p-3 bg-base-200 rounded-lg">
-                  <div class="flex items-center gap-3">
-                    <div class="avatar placeholder">
+                <div class="flex items-center justify-between gap-3 p-3 bg-base-200 rounded-lg">
+                  <div class="flex items-center gap-3 min-w-0">
+                    <div class="avatar placeholder shrink-0">
                       <div class="bg-primary text-primary-content rounded-full w-10">
                         <span class="text-lg">{String.first(follow.followed.email || "?")}</span>
                       </div>
                     </div>
-                    <div>
-                      <p class="font-medium">{follow.followed.email}</p>
+                    <div class="min-w-0">
+                      <p class="font-medium truncate">{follow.followed.email}</p>
                       <p class="text-sm text-base-content/50">
                         Following since <.time_ago datetime={follow.inserted_at} />
                       </p>
                     </div>
                   </div>
                   <button
-                    class="btn btn-sm btn-outline btn-error"
+                    class="btn btn-sm btn-outline btn-error shrink-0"
                     phx-click="unfollow"
                     phx-value-uuid={follow.followed.uuid}
                   >
@@ -146,22 +146,22 @@
                     connection,
                     @current_user.uuid
                   ) %>
-                <div class="flex items-center justify-between p-3 bg-base-200 rounded-lg">
-                  <div class="flex items-center gap-3">
-                    <div class="avatar placeholder">
+                <div class="flex items-center justify-between gap-3 p-3 bg-base-200 rounded-lg">
+                  <div class="flex items-center gap-3 min-w-0">
+                    <div class="avatar placeholder shrink-0">
                       <div class="bg-success text-success-content rounded-full w-10">
                         <span class="text-lg">{String.first(other_user.email || "?")}</span>
                       </div>
                     </div>
-                    <div>
-                      <p class="font-medium">{other_user.email}</p>
+                    <div class="min-w-0">
+                      <p class="font-medium truncate">{other_user.email}</p>
                       <p class="text-sm text-base-content/50">
                         Connected <.time_ago datetime={connection.responded_at} />
                       </p>
                     </div>
                   </div>
                   <button
-                    class="btn btn-sm btn-outline btn-error"
+                    class="btn btn-sm btn-outline btn-error shrink-0"
                     phx-click="remove_connection"
                     phx-value-uuid={other_user.uuid}
                   >
@@ -191,23 +191,23 @@
             <% else %>
               <div class="space-y-3">
                 <%= for request <- @incoming_requests do %>
-                  <div class="flex items-center justify-between p-3 bg-warning/10 rounded-lg border border-warning/20">
-                    <div class="flex items-center gap-3">
-                      <div class="avatar placeholder">
+                  <div class="flex items-center justify-between gap-3 p-3 bg-warning/10 rounded-lg border border-warning/20">
+                    <div class="flex items-center gap-3 min-w-0">
+                      <div class="avatar placeholder shrink-0">
                         <div class="bg-warning text-warning-content rounded-full w-10">
                           <span class="text-lg">
                             {String.first(request.requester.email || "?")}
                           </span>
                         </div>
                       </div>
-                      <div>
-                        <p class="font-medium">{request.requester.email}</p>
+                      <div class="min-w-0">
+                        <p class="font-medium truncate">{request.requester.email}</p>
                         <p class="text-sm text-base-content/50">
                           Requested <.time_ago datetime={request.requested_at} />
                         </p>
                       </div>
                     </div>
-                    <div class="flex gap-2">
+                    <div class="flex gap-2 shrink-0">
                       <button
                         class="btn btn-sm btn-success"
                         phx-click="accept_request"
@@ -243,24 +243,24 @@
             <% else %>
               <div class="space-y-3">
                 <%= for request <- @outgoing_requests do %>
-                  <div class="flex items-center justify-between p-3 bg-info/10 rounded-lg border border-info/20">
-                    <div class="flex items-center gap-3">
-                      <div class="avatar placeholder">
+                  <div class="flex items-center justify-between gap-3 p-3 bg-info/10 rounded-lg border border-info/20">
+                    <div class="flex items-center gap-3 min-w-0">
+                      <div class="avatar placeholder shrink-0">
                         <div class="bg-info text-info-content rounded-full w-10">
                           <span class="text-lg">
                             {String.first(request.recipient.email || "?")}
                           </span>
                         </div>
                       </div>
-                      <div>
-                        <p class="font-medium">{request.recipient.email}</p>
+                      <div class="min-w-0">
+                        <p class="font-medium truncate">{request.recipient.email}</p>
                         <p class="text-sm text-base-content/50">
                           Sent <.time_ago datetime={request.requested_at} />
                         </p>
                       </div>
                     </div>
                     <button
-                      class="btn btn-sm btn-outline btn-error"
+                      class="btn btn-sm btn-outline btn-error shrink-0"
                       phx-click="cancel_request"
                       phx-value-id={request.uuid}
                     >
@@ -290,15 +290,15 @@
           <% else %>
             <div class="space-y-3">
               <%= for block <- @items do %>
-                <div class="flex items-center justify-between p-3 bg-error/10 rounded-lg border border-error/20">
-                  <div class="flex items-center gap-3">
-                    <div class="avatar placeholder">
+                <div class="flex items-center justify-between gap-3 p-3 bg-error/10 rounded-lg border border-error/20">
+                  <div class="flex items-center gap-3 min-w-0">
+                    <div class="avatar placeholder shrink-0">
                       <div class="bg-error text-error-content rounded-full w-10">
                         <span class="text-lg">{String.first(block.blocked.email || "?")}</span>
                       </div>
                     </div>
-                    <div>
-                      <p class="font-medium">{block.blocked.email}</p>
+                    <div class="min-w-0">
+                      <p class="font-medium truncate">{block.blocked.email}</p>
                       <p class="text-sm text-base-content/50">
                         Blocked <.time_ago datetime={block.inserted_at} />
                       </p>
@@ -308,7 +308,7 @@
                     </div>
                   </div>
                   <button
-                    class="btn btn-sm btn-outline"
+                    class="btn btn-sm btn-outline shrink-0"
                     phx-click="unblock"
                     phx-value-uuid={block.blocked.uuid}
                   >
