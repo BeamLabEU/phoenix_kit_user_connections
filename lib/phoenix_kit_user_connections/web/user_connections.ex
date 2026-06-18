@@ -19,6 +19,8 @@ defmodule PhoenixKitUserConnections.Web.UserConnections do
     if current_user && PhoenixKitUserConnections.enabled?() do
       project_title = Settings.get_project_title()
 
+      # Tab data is loaded in handle_params/3, which always runs after mount/3 for
+      # a routed LiveView — loading it here as well would just be a wasted query.
       socket =
         socket
         |> assign(:page_title, "My Connections")
@@ -27,7 +29,6 @@ defmodule PhoenixKitUserConnections.Web.UserConnections do
         |> assign(:current_user, current_user)
         |> assign(:tab, @default_tab)
         |> load_counts()
-        |> load_tab_data(@default_tab)
 
       {:ok, socket}
     else

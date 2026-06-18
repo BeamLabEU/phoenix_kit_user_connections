@@ -3,28 +3,28 @@
   <div class="mb-6 overflow-x-auto">
     <div role="tablist" class="tabs tabs-boxed flex-nowrap w-max max-w-full mx-auto">
       <.link
-        navigate={PhoenixKit.Utils.Routes.path("/profile/connections?tab=followers")}
+        patch={PhoenixKit.Utils.Routes.path("/profile/connections?tab=followers")}
         role="tab"
         class={"tab #{if @tab == "followers", do: "tab-active"}"}
       >
         Followers <span class="badge badge-sm ml-2">{@followers_count}</span>
       </.link>
       <.link
-        navigate={PhoenixKit.Utils.Routes.path("/profile/connections?tab=following")}
+        patch={PhoenixKit.Utils.Routes.path("/profile/connections?tab=following")}
         role="tab"
         class={"tab #{if @tab == "following", do: "tab-active"}"}
       >
         Following <span class="badge badge-sm ml-2">{@following_count}</span>
       </.link>
       <.link
-        navigate={PhoenixKit.Utils.Routes.path("/profile/connections?tab=connections")}
+        patch={PhoenixKit.Utils.Routes.path("/profile/connections?tab=connections")}
         role="tab"
         class={"tab #{if @tab == "connections", do: "tab-active"}"}
       >
         Connections <span class="badge badge-sm ml-2">{@connections_count}</span>
       </.link>
       <.link
-        navigate={PhoenixKit.Utils.Routes.path("/profile/connections?tab=requests")}
+        patch={PhoenixKit.Utils.Routes.path("/profile/connections?tab=requests")}
         role="tab"
         class={"tab #{if @tab == "requests", do: "tab-active"}"}
       >
@@ -34,7 +34,7 @@
         <% end %>
       </.link>
       <.link
-        navigate={PhoenixKit.Utils.Routes.path("/profile/connections?tab=blocked")}
+        patch={PhoenixKit.Utils.Routes.path("/profile/connections?tab=blocked")}
         role="tab"
         class={"tab #{if @tab == "blocked", do: "tab-active"}"}
       >

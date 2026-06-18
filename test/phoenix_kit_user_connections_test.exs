@@ -63,8 +63,7 @@ defmodule PhoenixKitUserConnectionsTest do
   describe "admin_tabs/0" do
     test "returns a non-empty list" do
       tabs = PhoenixKitUserConnections.admin_tabs()
-      assert is_list(tabs)
-      assert tabs != []
+      assert [_ | _] = tabs
     end
 
     test "main tab has required fields" do
@@ -84,7 +83,7 @@ defmodule PhoenixKitUserConnectionsTest do
 
   describe "version/0" do
     test "returns a version string" do
-      assert PhoenixKitUserConnections.version() == "0.1.0"
+      assert PhoenixKitUserConnections.version() == "0.1.2"
     end
   end
 
@@ -94,7 +93,7 @@ defmodule PhoenixKitUserConnectionsTest do
     end
 
     test "css_sources/0 returns list with app name" do
-      assert PhoenixKitUserConnections.css_sources() == ["phoenix_kit_user_connections"]
+      assert PhoenixKitUserConnections.css_sources() == [:phoenix_kit_user_connections]
     end
   end
 end
