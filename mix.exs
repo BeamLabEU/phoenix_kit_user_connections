@@ -1,7 +1,7 @@
 defmodule PhoenixKitUserConnections.MixProject do
   use Mix.Project
 
-  @version "0.1.2"
+  @version "0.2.0"
   @source_url "https://github.com/BeamLabEU/phoenix_kit_user_connections"
 
   def project do
@@ -57,7 +57,7 @@ defmodule PhoenixKitUserConnections.MixProject do
   defp deps do
     [
       # PhoenixKit provides the Module behaviour and Settings API.
-      {:phoenix_kit, "~> 1.7.189"},
+      {:phoenix_kit, "~> 2.0"},
 
       # LiveView is needed for the admin pages.
       {:phoenix_live_view, "~> 1.1"},

@@ -16,7 +16,7 @@ Social relationships module for [PhoenixKit](https://github.com/BeamLabEU/phoeni
 Add to your `mix.exs` dependencies:
 
 ```elixir
-{:phoenix_kit_user_connections, "~> 0.1.0"}
+{:phoenix_kit_user_connections, "~> 0.2"}
 ```
 
 The module is auto-discovered by PhoenixKit at startup — no additional configuration needed.
