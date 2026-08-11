@@ -83,7 +83,7 @@ defmodule PhoenixKitUserConnectionsTest do
 
   describe "version/0" do
     test "returns a version string" do
-      assert PhoenixKitUserConnections.version() == "0.2.0"
+      assert PhoenixKitUserConnections.version() == "0.2.2"
     end
   end
 
