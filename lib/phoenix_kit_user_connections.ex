@@ -93,7 +93,7 @@ defmodule PhoenixKitUserConnections do
   def module_name, do: "Connections"
 
   @impl PhoenixKit.Module
-  def version, do: "0.2.2"
+  def version, do: "0.2.3"
 
   @impl PhoenixKit.Module
   def permission_metadata do

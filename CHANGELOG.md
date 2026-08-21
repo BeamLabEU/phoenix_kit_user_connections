@@ -2,6 +2,19 @@
 
 All notable changes to PhoenixKitUserConnections will be documented in this file.
 
+## 0.2.3 - 2026-08-21
+
+### Changed
+
+- **The connections tab strip uses core's `<.nav_tabs>`** (`:patch`,
+  `:badge_class`, nil-tolerant badges) instead of hand-rolled
+  `tabs-boxed` markup (#7).
+
+  **Requires `phoenix_kit` 2.13.5+ at runtime.** Tab link keys live in a
+  runtime map, so against an older core this compiles and renders a
+  strip of dead buttons rather than failing to compile. Upgrade core
+  first.
+
 ## 0.2.2 - 2026-08-11
 
 ### Fixed
