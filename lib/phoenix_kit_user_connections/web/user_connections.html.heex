@@ -13,21 +13,23 @@
 
   <%!-- Tabs Navigation --%>
   <div class="mb-6 overflow-x-auto">
+    <%!-- nav_tabs passes :patch through VERBATIM (mirroring <.link>), so
+         the URLs carry their own prefix+locale via Routes.path. --%>
     <.nav_tabs
       active_tab={@tab}
       class="flex-nowrap w-max max-w-full mx-auto"
       tabs={[
-        %{id: "followers", label: "Followers", patch: "/profile/connections?tab=followers", badge: @followers_count},
-        %{id: "following", label: "Following", patch: "/profile/connections?tab=following", badge: @following_count},
-        %{id: "connections", label: "Connections", patch: "/profile/connections?tab=connections", badge: @connections_count},
+        %{id: "followers", label: "Followers", patch: PhoenixKit.Utils.Routes.path("/profile/connections?tab=followers"), badge: @followers_count},
+        %{id: "following", label: "Following", patch: PhoenixKit.Utils.Routes.path("/profile/connections?tab=following"), badge: @following_count},
+        %{id: "connections", label: "Connections", patch: PhoenixKit.Utils.Routes.path("/profile/connections?tab=connections"), badge: @connections_count},
         %{
           id: "requests",
           label: "Requests",
-          patch: "/profile/connections?tab=requests",
+          patch: PhoenixKit.Utils.Routes.path("/profile/connections?tab=requests"),
           badge: if(@pending_count > 0, do: @pending_count),
           badge_class: "badge-warning"
         },
-        %{id: "blocked", label: "Blocked", patch: "/profile/connections?tab=blocked", badge: @blocked_count}
+        %{id: "blocked", label: "Blocked", patch: PhoenixKit.Utils.Routes.path("/profile/connections?tab=blocked"), badge: @blocked_count}
       ]}
     />
   </div>
