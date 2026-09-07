@@ -82,8 +82,8 @@ defmodule PhoenixKitUserConnectionsTest do
   end
 
   describe "version/0" do
-    test "returns a version string" do
-      assert PhoenixKitUserConnections.version() == "0.2.3"
+    test "matches the version in mix.exs" do
+      assert PhoenixKitUserConnections.version() == Mix.Project.config()[:version]
     end
   end
 

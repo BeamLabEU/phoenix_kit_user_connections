@@ -54,6 +54,8 @@ defmodule PhoenixKitUserConnections do
   alias PhoenixKitUserConnections.Follow
   alias PhoenixKitUserConnections.FollowHistory
 
+  @version Mix.Project.config()[:version]
+
   # ===== MODULE STATUS =====
 
   @impl PhoenixKit.Module
@@ -104,7 +106,7 @@ defmodule PhoenixKitUserConnections do
   def module_name, do: "Connections"
 
   @impl PhoenixKit.Module
-  def version, do: "0.2.3"
+  def version, do: @version
 
   @impl PhoenixKit.Module
   def permission_metadata do
