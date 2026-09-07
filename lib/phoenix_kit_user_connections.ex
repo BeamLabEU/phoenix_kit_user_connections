@@ -82,6 +82,17 @@ defmodule PhoenixKitUserConnections do
     }
   end
 
+  @doc "Returns stats for the module card on the admin Modules page."
+  def module_stats do
+    config = get_config()
+
+    [
+      %{label: "Follows", value: config[:follows_count] || 0},
+      %{label: "Connections", value: config[:connections_count] || 0},
+      %{label: "Blocks", value: config[:blocks_count] || 0}
+    ]
+  end
+
   # ============================================================================
   # Module Behaviour Callbacks
   # ============================================================================
