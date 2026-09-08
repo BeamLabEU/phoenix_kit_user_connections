@@ -43,6 +43,10 @@ committing (switching between path and Hex resolution rewrites the lock).
 `mix precommit` here also runs `deps.unlock --check-unused` and `mix hex.audit`;
 `mix quality` (format + credo --strict + dialyzer) is the lighter local pass.
 
+Repo-local aliases:
+
+- `mix quality.ci` — `format --check-formatted` + `credo --strict` + `dialyzer`: it CHECKS formatting rather than applying it, so run `mix format` first.
+
 ## Conventions
 
 - Module key `"connections"`, tab id `:admin_connections`, URL segment `connections`. Multi-word segments use hyphens.
