@@ -1,6 +1,18 @@
 defmodule PhoenixKitUserConnectionsTest do
   use ExUnit.Case
 
+  # `function_exported?/3` answers FALSE for a module that is merely not
+  # loaded yet, not only for one that lacks the function. Nothing forces
+  # PhoenixKitUserConnections into memory before the three callback
+  # assertions run, so under a random seed they failed intermittently --
+  # roughly one run in four, and never when run alone, which is exactly the
+  # shape that reads as "flaky infrastructure" and gets re-run instead of
+  # fixed. Loading it once here makes them deterministic.
+  setup_all do
+    Code.ensure_loaded!(PhoenixKitUserConnections)
+    :ok
+  end
+
   describe "behaviour implementation" do
     test "implements PhoenixKit.Module" do
       behaviours =
@@ -82,8 +94,8 @@ defmodule PhoenixKitUserConnectionsTest do
   end
 
   describe "version/0" do
-    test "returns a version string" do
-      assert PhoenixKitUserConnections.version() == "0.2.3"
+    test "matches the version in mix.exs" do
+      assert PhoenixKitUserConnections.version() == Mix.Project.config()[:version]
     end
   end
 
@@ -94,6 +106,66 @@ defmodule PhoenixKitUserConnectionsTest do
 
     test "css_sources/0 returns list with app name" do
       assert PhoenixKitUserConnections.css_sources() == [:phoenix_kit_user_connections]
+    end
+  end
+
+  describe "Block.changeset/2 reason length" do
+    # The column is `character varying(255)`. A changeset that allowed more
+    # accepted the value and then raised Postgrex.Error on insert, handing the
+    # caller a crash where it had asked for a changeset error.
+    test "accepts a reason at the column's limit" do
+      attrs = %{
+        blocker_uuid: UUIDv7.generate(),
+        blocked_uuid: UUIDv7.generate(),
+        reason: String.duplicate("a", 255)
+      }
+
+      assert %Ecto.Changeset{valid?: true} =
+               PhoenixKitUserConnections.Block.changeset(
+                 %PhoenixKitUserConnections.Block{},
+                 attrs
+               )
+    end
+
+    # Postgres counts CHARACTERS; Ecto's validate_length counts GRAPHEME
+    # CLUSTERS by default. 255 decomposed graphemes are 510 codepoints, which
+    # a plain `max: 255` accepts and `character varying(255)` refuses with
+    # :string_data_right_truncation — the same crash, reachable with nothing
+    # more exotic than an accented reason. Hence `count: :codepoints`.
+    test "counts codepoints, not graphemes, so a decomposed reason is refused" do
+      decomposed = String.duplicate("e\u0301", 255)
+
+      assert String.length(decomposed) == 255
+      assert length(String.to_charlist(decomposed)) == 510
+
+      attrs = %{
+        blocker_uuid: UUIDv7.generate(),
+        blocked_uuid: UUIDv7.generate(),
+        reason: decomposed
+      }
+
+      assert %Ecto.Changeset{valid?: false} =
+               PhoenixKitUserConnections.Block.changeset(
+                 %PhoenixKitUserConnections.Block{},
+                 attrs
+               )
+    end
+
+    test "rejects a reason past it rather than deferring to the database" do
+      attrs = %{
+        blocker_uuid: UUIDv7.generate(),
+        blocked_uuid: UUIDv7.generate(),
+        reason: String.duplicate("a", 256)
+      }
+
+      changeset =
+        PhoenixKitUserConnections.Block.changeset(
+          %PhoenixKitUserConnections.Block{},
+          attrs
+        )
+
+      refute changeset.valid?
+      assert changeset.errors[:reason]
     end
   end
 end

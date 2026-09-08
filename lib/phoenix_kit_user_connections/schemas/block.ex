@@ -41,7 +41,17 @@ defmodule PhoenixKitUserConnections.Block do
     block
     |> cast(attrs, [:blocker_uuid, :blocked_uuid, :reason])
     |> validate_required([:blocker_uuid, :blocked_uuid])
-    |> validate_length(:reason, max: 500)
+    # 255, not 500: the column is `character varying(255)`. A longer reason
+    # passed validation and then raised `Postgrex.Error` on insert, so the
+    # caller got a crash where it had asked for a changeset error.
+    #
+    # `count: :codepoints` matters as much as the number. Ecto counts
+    # GRAPHEME CLUSTERS by default; Postgres counts characters. 255 decomposed
+    # graphemes ("e" + U+0301, say) are 510 codepoints, which passes a default
+    # `max: 255` and is still refused by the column with
+    # `:string_data_right_truncation` — the exact crash this validation exists
+    # to prevent, just needing an accented reason to reach it.
+    |> validate_length(:reason, max: 255, count: :codepoints)
     |> validate_not_self_block()
     |> put_inserted_at()
     |> foreign_key_constraint(:blocker_uuid)
