@@ -304,15 +304,48 @@ defmodule PhoenixKitUserConnections do
   end
 
   defp do_request_connection(requester_uuid, recipient_uuid) do
-    case get_pending_request_between(recipient_uuid, requester_uuid) do
-      %Connection{} = existing ->
+    cond do
+      existing = get_pending_request_between(recipient_uuid, requester_uuid) ->
         accept_connection_with_actor(existing, requester_uuid)
 
-      nil ->
-        case get_pending_request_between(requester_uuid, recipient_uuid) do
-          %Connection{} -> {:error, :pending_request}
-          nil -> create_pending_connection(requester_uuid, recipient_uuid)
-        end
+      get_pending_request_between(requester_uuid, recipient_uuid) ->
+        {:error, :pending_request}
+
+      true ->
+        insert_pending_or_reconcile(requester_uuid, recipient_uuid)
+    end
+  end
+
+  defp insert_pending_or_reconcile(requester_uuid, recipient_uuid) do
+    case create_pending_connection(requester_uuid, recipient_uuid) do
+      # The pair's unique index (core V188) refused the insert, so another
+      # request for the SAME pair committed between the reads above and this
+      # write — the mutual-click race. Those reads are now stale, so redo them
+      # once against the committed row and return what this caller would have
+      # got had it arrived a moment later, which is usually the auto-accept.
+      # One retry is enough: the winner's row is committed and the index means
+      # this pair can never hold a second row again.
+      {:error, :pair_exists} -> reconcile_pair_conflict(requester_uuid, recipient_uuid)
+      other -> other
+    end
+  end
+
+  defp reconcile_pair_conflict(requester_uuid, recipient_uuid) do
+    cond do
+      connected?(requester_uuid, recipient_uuid) ->
+        {:error, :already_connected}
+
+      existing = get_pending_request_between(recipient_uuid, requester_uuid) ->
+        accept_connection_with_actor(existing, requester_uuid)
+
+      get_pending_request_between(requester_uuid, recipient_uuid) ->
+        {:error, :pending_request}
+
+      true ->
+        # The winning row was removed again between the conflict and this
+        # re-read. Nothing to reconcile against and retrying could loop, so
+        # report it as the transient it is.
+        {:error, :not_found}
     end
   end
 
@@ -769,9 +802,29 @@ defmodule PhoenixKitUserConnections do
           log_connection_history(requester_uuid, recipient_uuid, requester_uuid, "requested")
           connection
 
-        {:error, changeset} ->
-          repo().rollback(changeset)
+        {:error, %Ecto.Changeset{} = changeset} ->
+          repo().rollback(insert_failure_reason(changeset))
       end
+    end)
+  end
+
+  # The pair's unique index refusing the row can only mean another request for
+  # this pair committed after the pre-checks read. Surfaced as its own atom so
+  # the caller can re-read and finish the job instead of handing the user a raw
+  # "has already been taken".
+  defp insert_failure_reason(changeset) do
+    if pair_conflict?(changeset), do: :pair_exists, else: changeset
+  end
+
+  # Ecto attaches the pair index's violation to whichever field the schema's
+  # unique_constraint/3 names first, so match on the constraint metadata rather
+  # than on a field name — the index is on an EXPRESSION over both columns and
+  # the field list is only a label.
+  defp pair_conflict?(%Ecto.Changeset{errors: errors}) do
+    Enum.any?(errors, fn {_field, {_msg, opts}} ->
+      Keyword.get(opts, :constraint) == :unique and
+        Keyword.get(opts, :constraint_name) ==
+          "phoenix_kit_user_connections_requester_recipient_uidx"
     end)
   end
 
