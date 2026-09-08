@@ -1,6 +1,18 @@
 defmodule PhoenixKitUserConnectionsTest do
   use ExUnit.Case
 
+  # `function_exported?/3` answers FALSE for a module that is merely not
+  # loaded yet, not only for one that lacks the function. Nothing forces
+  # PhoenixKitUserConnections into memory before the three callback
+  # assertions run, so under a random seed they failed intermittently --
+  # roughly one run in four, and never when run alone, which is exactly the
+  # shape that reads as "flaky infrastructure" and gets re-run instead of
+  # fixed. Loading it once here makes them deterministic.
+  setup_all do
+    Code.ensure_loaded!(PhoenixKitUserConnections)
+    :ok
+  end
+
   describe "behaviour implementation" do
     test "implements PhoenixKit.Module" do
       behaviours =

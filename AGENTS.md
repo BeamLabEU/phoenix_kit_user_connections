@@ -73,6 +73,7 @@ committing (switching between path and Hex resolution rewrites the lock).
 - `<.nav_tabs>` with `:patch`/`:badge_class` needs core 2.13.5+ at runtime; against an older core it compiles and renders a strip of dead buttons. The pin stays `~> 2.0` because the conformance test refuses a three-segment pin, so the floor is documented, not enforced: upgrade core first.
 - `/profile/connections` is assumed by the template, not registered by the module; a host that mounts `Web.UserConnections` anywhere else gets a tab strip that patches to a 404.
 - `mix test` runs with no database and no Repo; a change to a query or changeset is unverified until exercised in a host.
+- `function_exported?/3` answers **false for a module that is merely not loaded**, not only for one missing the function, so a bare callback assertion fails intermittently under a random seed and never when run alone — the shape that reads as flaky infrastructure and gets re-run instead of fixed. The behaviour test's `setup_all` calls `Code.ensure_loaded!/1`; any new `function_exported?` assertion must be covered by it.
 
 ## Architecture
 
