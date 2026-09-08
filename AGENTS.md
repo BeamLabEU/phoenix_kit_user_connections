@@ -21,7 +21,7 @@ This is a library, not a standalone Phoenix app.
 - Own migrations. Its six tables ship in core's chain and `migration_module/0` is unset.
 - Route the user-facing page. There is no `user_dashboard_tabs/0` and no `route_module/0`; the host mounts `Web.UserConnections`.
 - Notify anyone. No PubSub topics, notification types or emails: a request or an accept is visible on the next page load only.
-- Enforce uniqueness in the database. The pre-checks are the only guard (see Landmines).
+- Own the uniqueness indexes. Core's chain creates them (V188); this module only names them in `unique_constraint/3` (see Landmines).
 - Delete history. Every action appends a `*_history` row and nothing removes one; user deletion cascades through core's foreign keys, so `before_user_delete/1` is not implemented.
 - Use core's activity log. The module's own history tables are the audit trail.
 
@@ -69,7 +69,8 @@ committing (switching between path and Hex resolution rewrites the lock).
 ### Landmines
 
 - `Block.changeset/2` caps `reason` at 255 **with `count: :codepoints`** to match the column. Both halves are load-bearing: Postgres counts characters while Ecto's `validate_length/3` counts grapheme clusters by default, so 255 decomposed graphemes are 510 codepoints — accepted by a plain `max: 255` and refused by `character varying(255)` with `:string_data_right_truncation`, which is the crash the validation exists to prevent. Any new length validation on a column-backed field must read the column's real width AND count codepoints; core declares these tables, so the width lives in core's chain, not here.
-- The unique-constraint names the schemas declare (`phoenix_kit_user_follows_unique_idx`, `phoenix_kit_user_blocks_unique_idx`, `phoenix_kit_user_connections_requester_recipient_uidx`) exist in no core migration; nothing in the database is unique on those pairs. A concurrent double follow or request inserts two rows and `unique_constraint/3` never turns anything into a changeset error. Adding them is a core migration plus its ExpectedSchema entries.
+- The three unique indexes the schemas name (`phoenix_kit_user_follows_unique_idx`, `phoenix_kit_user_blocks_unique_idx`, `phoenix_kit_user_connections_requester_recipient_uidx`) ship in **core's V188**, so those `unique_constraint/3` calls only work against a core that includes it. Against an older core they are inert exactly as before — the pre-check is then the only guard and a concurrent double follow or request inserts two rows. The pin stays `~> 2.0` (the conformance test refuses a three-segment pin), so this floor is documented, not enforced.
+- The connection index is on `(requester_uuid, recipient_uuid)` and deliberately does NOT normalise the pair: A→B and B→A are both insertable, which is what `request_connection/2` relies on when it auto-accepts a mutual pending request. Making it order-independent would change module behaviour, not just enforce it.
 - `<.nav_tabs>` with `:patch`/`:badge_class` needs core 2.13.5+ at runtime; against an older core it compiles and renders a strip of dead buttons. The pin stays `~> 2.0` because the conformance test refuses a three-segment pin, so the floor is documented, not enforced: upgrade core first.
 - `/profile/connections` is assumed by the template, not registered by the module; a host that mounts `Web.UserConnections` anywhere else gets a tab strip that patches to a 404.
 - `mix test` runs with no database and no Repo; a change to a query or changeset is unverified until exercised in a host.
@@ -124,7 +125,8 @@ manual `inserted_at` and no `updated_at` because its rows never change.
 None. Tables `phoenix_kit_user_follows`, `phoenix_kit_user_follows_history`,
 `phoenix_kit_user_connections`, `phoenix_kit_user_connections_history`,
 `phoenix_kit_user_blocks`, `phoenix_kit_user_blocks_history` ship in core's
-chain (V135 baseline, `owner: :core` in core's ExpectedSchema);
+chain (V135 baseline, `owner: :core` in core's ExpectedSchema), and so do the
+three unique indexes the schemas name (V188);
 `migration_module/0` is unset. A schema change is a core migration first (with
 its ExpectedSchema entry), then schema edits here. UUIDv7 PKs; `use
 PhoenixKit.SchemaPrefix` on every table-backed schema
@@ -169,6 +171,5 @@ publish has succeeded.
 
 ## TODOs
 
-- Database uniqueness for the three relationship pairs (see Landmines). Unblocked by a core migration plus ExpectedSchema entries under the names the schemas already declare; the schemas then need no change.
 - Routing the user page through `user_dashboard_tabs/0` so core mounts it under `/dashboard/…`. The five `Routes.path("/profile/connections?tab=…")` links in the template must move with it, and hosts mounting it at `/profile/connections` today must be told.
 - Tests for the business logic. Unblocked by a Repo in `config/test.exs` and `PhoenixKit.Migration.ensure_current/2` in `test_helper.exs` (core's chain owns the tables); tag them `:integration`.
