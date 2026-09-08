@@ -115,6 +115,30 @@ defmodule PhoenixKitUserConnectionsTest do
                )
     end
 
+    # Postgres counts CHARACTERS; Ecto's validate_length counts GRAPHEME
+    # CLUSTERS by default. 255 decomposed graphemes are 510 codepoints, which
+    # a plain `max: 255` accepts and `character varying(255)` refuses with
+    # :string_data_right_truncation — the same crash, reachable with nothing
+    # more exotic than an accented reason. Hence `count: :codepoints`.
+    test "counts codepoints, not graphemes, so a decomposed reason is refused" do
+      decomposed = String.duplicate("e\u0301", 255)
+
+      assert String.length(decomposed) == 255
+      assert length(String.to_charlist(decomposed)) == 510
+
+      attrs = %{
+        blocker_uuid: UUIDv7.generate(),
+        blocked_uuid: UUIDv7.generate(),
+        reason: decomposed
+      }
+
+      assert %Ecto.Changeset{valid?: false} =
+               PhoenixKitUserConnections.Block.changeset(
+                 %PhoenixKitUserConnections.Block{},
+                 attrs
+               )
+    end
+
     test "rejects a reason past it rather than deferring to the database" do
       attrs = %{
         blocker_uuid: UUIDv7.generate(),
