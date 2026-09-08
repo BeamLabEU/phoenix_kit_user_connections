@@ -96,4 +96,40 @@ defmodule PhoenixKitUserConnectionsTest do
       assert PhoenixKitUserConnections.css_sources() == [:phoenix_kit_user_connections]
     end
   end
+
+  describe "Block.changeset/2 reason length" do
+    # The column is `character varying(255)`. A changeset that allowed more
+    # accepted the value and then raised Postgrex.Error on insert, handing the
+    # caller a crash where it had asked for a changeset error.
+    test "accepts a reason at the column's limit" do
+      attrs = %{
+        blocker_uuid: UUIDv7.generate(),
+        blocked_uuid: UUIDv7.generate(),
+        reason: String.duplicate("a", 255)
+      }
+
+      assert %Ecto.Changeset{valid?: true} =
+               PhoenixKitUserConnections.Block.changeset(
+                 %PhoenixKitUserConnections.Block{},
+                 attrs
+               )
+    end
+
+    test "rejects a reason past it rather than deferring to the database" do
+      attrs = %{
+        blocker_uuid: UUIDv7.generate(),
+        blocked_uuid: UUIDv7.generate(),
+        reason: String.duplicate("a", 256)
+      }
+
+      changeset =
+        PhoenixKitUserConnections.Block.changeset(
+          %PhoenixKitUserConnections.Block{},
+          attrs
+        )
+
+      refute changeset.valid?
+      assert changeset.errors[:reason]
+    end
+  end
 end

@@ -41,7 +41,10 @@ defmodule PhoenixKitUserConnections.Block do
     block
     |> cast(attrs, [:blocker_uuid, :blocked_uuid, :reason])
     |> validate_required([:blocker_uuid, :blocked_uuid])
-    |> validate_length(:reason, max: 500)
+    # 255, not 500: the column is `character varying(255)`. A longer reason
+    # passed validation and then raised `Postgrex.Error` on insert, so the
+    # caller got a crash where it had asked for a changeset error.
+    |> validate_length(:reason, max: 255)
     |> validate_not_self_block()
     |> put_inserted_at()
     |> foreign_key_constraint(:blocker_uuid)
