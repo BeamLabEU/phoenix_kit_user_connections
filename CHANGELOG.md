@@ -2,6 +2,36 @@
 
 All notable changes to PhoenixKitUserConnections will be documented in this file.
 
+## 0.3.0 - 2026-10-24
+
+### Added
+
+- `module_stats/0` — follows, connections and blocks counts for this
+  module's card on the admin Modules page.
+
+### Fixed
+
+- **Two users connecting to each other at the same moment no longer get a
+  raw "has already been taken" error.** With core's V188 unique index on the
+  pair (core 2.22.3+), the losing insert is now recognised and the pair is
+  re-read once: the caller gets what it would have got a moment later,
+  usually the auto-accept. Against a core without V188 nothing changes; the
+  pre-check stays the only guard.
+- **A block reason longer than 255 characters raised `Postgrex.Error` on
+  insert** instead of returning a changeset error. The limit was 500, but the
+  column is `varchar(255)`. It is now 255, counted in codepoints the way
+  Postgres counts, so accented text built from combining characters cannot
+  slip past it. Reasons of 256–500 characters that used to crash are now
+  rejected with a validation error.
+- The "My Connections" tab links are built with `Routes.path/1` again, so
+  they carry the host's URL prefix and locale (#8).
+- `version/0` is read from `mix.exs` at compile time, so it can no longer
+  drift from the package version.
+
+### Changed
+
+- Dependency refresh: `phoenix_kit` 2.64.1 and its transitive set.
+
 ## 0.2.3 - 2026-08-21
 
 ### Changed
