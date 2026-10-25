@@ -109,6 +109,9 @@ defmodule PhoenixKitUserConnections do
   def version, do: @version
 
   @impl PhoenixKit.Module
+  def migration_module, do: PhoenixKitUserConnections.Migrations
+
+  @impl PhoenixKit.Module
   def permission_metadata do
     %{
       key: "connections",

@@ -2,6 +2,24 @@
 
 All notable changes to PhoenixKitUserConnections will be documented in this file.
 
+## Unreleased
+
+### Added
+
+- The module's own migration chain, `PhoenixKitUserConnections.Migrations`
+  (`migration_module/0`). V1 adopts the six tables core's chain creates for
+  this module, exactly as a fresh core install builds them (V135 plus V188's
+  unique indexes), and stamps a `pkucn_schema:1` marker. Nothing changes on an
+  existing install but the marker; from now on a change to these tables ships
+  here instead of in core. A test proves the chain builds the tables without
+  core (core's `PhoenixKit.TestSupport.ModuleChainCheck`), with a small test
+  database setup the suite did not have before.
+
+### Changed
+
+- Requires `phoenix_kit` `>= 2.22.3 and < 3.0.0` (was `~> 2.0`): 2.22.3 is the
+  first core with V188, the unique indexes the schemas name and V1 adopts.
+
 ## 0.3.0 - 2026-10-24
 
 ### Added

@@ -12,14 +12,17 @@ defmodule PhoenixKitUserConnections.CorePinConformanceTest do
   outright, with no degraded mode. Nothing else in this repo's own test run
   would notice, which is why the check is a test rather than a convention.
 
-  Core 1.7 is deliberately excluded: core 2.0.0 squashed the migration chain to
-  a V135 floor and this module is verified only against that baseline.
+  The floor is `>= 2.22.3 and < 3.0.0`: 2.22.3 is the first core with V188,
+  the three unique indexes this module's migration chain adopts and its schemas
+  name. On an older core, V1's `CREATE UNIQUE INDEX IF NOT EXISTS` would meet
+  the duplicate rows V188 removes first, and fail. Core 1.7 stays excluded: core
+  2.0.0 squashed the migration chain to a V135 floor.
   """
 
-  @must_admit ["2.0.0", "2.0.7", "2.1.0", "2.9.4"]
-  @must_reject ["1.7.189", "1.7.236", "1.9.4", "3.0.0"]
+  @must_admit ["2.22.3", "2.23.0", "2.64.1", "2.99.4"]
+  @must_reject ["1.7.189", "1.7.236", "2.0.0", "2.22.2", "3.0.0"]
 
-  test "the :phoenix_kit requirement admits every core 2.x and nothing else" do
+  test "the :phoenix_kit requirement admits every core >= 2.22.3 minor and nothing else" do
     requirement = core_requirement()
 
     assert match?({:ok, _parsed}, Version.parse_requirement(requirement)),
@@ -29,7 +32,8 @@ defmodule PhoenixKitUserConnections.CorePinConformanceTest do
       assert Version.match?(version, requirement),
              "`:phoenix_kit` requirement #{inspect(requirement)} rejects core #{version}. " <>
                "A pin that excludes a core minor breaks `mix deps.get` for every host " <>
-               "running this module alongside that core. Keep it a two-segment `~> 2.0`."
+               "running this module alongside that core. Keep the floor patch-precise " <>
+               "and the ceiling open (`>= 2.22.3 and < 3.0.0`), never a three-segment `~>`."
     end
 
     for version <- @must_reject do

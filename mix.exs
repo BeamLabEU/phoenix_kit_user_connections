@@ -56,8 +56,11 @@ defmodule PhoenixKitUserConnections.MixProject do
 
   defp deps do
     [
-      # PhoenixKit provides the Module behaviour and Settings API.
-      {:phoenix_kit, "~> 2.0"},
+      # PhoenixKit provides the Module behaviour and Settings API. The floor is
+      # 2.22.3, the first core with V188 (the three unique indexes this
+      # module's chain adopts and its schemas name); compound form, so the
+      # ceiling stays open across later 2.x minors.
+      {:phoenix_kit, ">= 2.22.3 and < 3.0.0"},
 
       # LiveView is needed for the admin pages.
       {:phoenix_live_view, "~> 1.1"},
