@@ -352,22 +352,33 @@ defmodule PhoenixKitUserConnections do
     end
   end
 
-  @doc "Accepts a pending connection request."
-  def accept_connection(%Connection{status: "pending"} = connection) do
-    accept_connection_with_actor(connection, connection.recipient_uuid)
-  end
+  @doc """
+  Accepts a pending connection request on behalf of `recipient`.
 
-  def accept_connection(%Connection{}), do: {:error, :not_pending}
-
-  def accept_connection(connection_uuid) when is_binary(connection_uuid) do
-    case repo().get(Connection, connection_uuid) do
-      nil -> {:error, :not_found}
-      connection -> accept_connection(connection)
+  Only the request's recipient may accept it: anyone else gets
+  `{:error, :not_recipient}` and nothing changes. Takes a `%Connection{}` or
+  its uuid.
+  """
+  def accept_connection(recipient, connection_or_uuid) do
+    with {:ok, connection} <- pending_for_recipient(recipient, connection_or_uuid) do
+      accept_connection_with_actor(connection, connection.recipient_uuid)
     end
   end
 
-  @doc "Rejects a pending connection request."
-  def reject_connection(%Connection{status: "pending"} = connection) do
+  @doc """
+  Rejects a pending connection request on behalf of `recipient`.
+
+  Only the request's recipient may reject it: anyone else gets
+  `{:error, :not_recipient}` and nothing changes (the requester withdraws a
+  request with `cancel_request/2`). Takes a `%Connection{}` or its uuid.
+  """
+  def reject_connection(recipient, connection_or_uuid) do
+    with {:ok, connection} <- pending_for_recipient(recipient, connection_or_uuid) do
+      do_reject_connection(connection)
+    end
+  end
+
+  defp do_reject_connection(connection) do
     repo().transaction(fn ->
       log_connection_history(
         connection.requester_uuid,
@@ -383,12 +394,29 @@ defmodule PhoenixKitUserConnections do
     end)
   end
 
-  def reject_connection(%Connection{}), do: {:error, :not_pending}
+  # The pending request `connection_or_uuid` names, re-read from the database
+  # (a caller-supplied struct is never trusted for its recipient or status),
+  # when `user` is its recipient.
+  defp pending_for_recipient(user, %Connection{uuid: uuid}),
+    do: pending_for_recipient(user, uuid)
 
-  def reject_connection(connection_uuid) when is_binary(connection_uuid) do
+  defp pending_for_recipient(user, connection_uuid) when is_binary(connection_uuid) do
+    user_uuid = if user, do: get_user_uuid(user)
+
     case repo().get(Connection, connection_uuid) do
-      nil -> {:error, :not_found}
-      connection -> reject_connection(connection)
+      nil ->
+        {:error, :not_found}
+
+      %Connection{recipient_uuid: recipient_uuid}
+      when is_nil(user_uuid) or
+             recipient_uuid != user_uuid ->
+        {:error, :not_recipient}
+
+      %Connection{status: "pending"} = connection ->
+        {:ok, connection}
+
+      %Connection{} ->
+        {:error, :not_pending}
     end
   end
 

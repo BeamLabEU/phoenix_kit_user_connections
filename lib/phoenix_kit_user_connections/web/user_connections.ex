@@ -78,7 +78,7 @@ defmodule PhoenixKitUserConnections.Web.UserConnections do
 
   @impl true
   def handle_event("accept_request", %{"id" => connection_uuid}, socket) do
-    case PhoenixKitUserConnections.accept_connection(connection_uuid) do
+    case PhoenixKitUserConnections.accept_connection(socket.assigns.current_user, connection_uuid) do
       {:ok, _} ->
         {:noreply,
          socket
@@ -93,7 +93,7 @@ defmodule PhoenixKitUserConnections.Web.UserConnections do
 
   @impl true
   def handle_event("reject_request", %{"id" => connection_uuid}, socket) do
-    case PhoenixKitUserConnections.reject_connection(connection_uuid) do
+    case PhoenixKitUserConnections.reject_connection(socket.assigns.current_user, connection_uuid) do
       {:ok, _} ->
         {:noreply,
          socket

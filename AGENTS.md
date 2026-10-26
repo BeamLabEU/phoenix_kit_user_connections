@@ -60,10 +60,11 @@ Repo-local aliases:
 - History logging: every mutation runs inside `repo().transaction/1` and appends a history row (`log_follow_history/3`, `log_connection_history/4`, `log_block_history/4`). A failed history insert logs a warning and does not roll the action back. Connection history carries the `actor_uuid` of who acted. No PII beyond user UUIDs and the optional block `reason`.
 - Soft delete: none. Follows, connections and blocks are hard-deleted; the history tables are the record.
 - Every public user argument is either a `%{uuid: uuid}` struct (`PhoenixKit.Users.Auth.User`) or a raw UUID string (`get_user_uuid/1`); mixing the two is fine.
-- Guards run before every write, in this order: self-action, block in either direction, existing relationship. Errors are atoms: `:self_follow`, `:already_following`, `:not_following`, `:self_connection`, `:already_connected`, `:pending_request`, `:not_pending`, `:not_requester`, `:not_found`, `:not_connected`, `:self_block`, `:already_blocked`, `:not_blocked`, and `:blocked` for either direction.
+- Guards run before every write, in this order: self-action, block in either direction, existing relationship. Errors are atoms: `:self_follow`, `:already_following`, `:not_following`, `:self_connection`, `:already_connected`, `:pending_request`, `:not_pending`, `:not_requester`, `:not_recipient`, `:not_found`, `:not_connected`, `:self_block`, `:already_blocked`, `:not_blocked`, and `:blocked` for either direction.
 - `block/3` removes follows and connections in both directions inside the same transaction (each removal logged) before inserting the block. `unblock/2` restores nothing.
 - Mutual pending requests auto-accept: `request_connection/2` from B while A→B is pending accepts A's request with B as actor.
-- `reject_connection/1` and `cancel_request/2` delete the pending row (logging `rejected` / `removed`); `Connection.statuses/0` lists `"rejected"` but no persisted row carries it.
+- Who may answer a request is enforced here, not in the LiveView: `accept_connection/2` and `reject_connection/2` take the acting user first and refuse anyone but the request's recipient (`:not_recipient`), `cancel_request/2` anyone but its requester (`:not_requester`). The row is re-read by uuid, so a struct passed in is never trusted. Keep that shape for any new action on someone else's row — the LiveView forwards whatever uuid the browser sends.
+- `reject_connection/2` and `cancel_request/2` delete the pending row (logging `rejected` / `removed`); `Connection.statuses/0` lists `"rejected"` but no persisted row carries it.
 - List functions take `limit:`, `offset:` and `preload:` (default `true`); the user page passes `limit: @page_size` (25) and has no paging UI.
 - The admin counts (`get_config/0`, `get_stats/0`, `module_stats/0`) rescue `Ecto.QueryError` and `DBConnection.ConnectionError` to `0` so the Modules page renders before the schema exists.
 - User page: tab data loads in `handle_params/3` (never also in `mount/3`); tabs `patch`, never `navigate`; every event handler reloads the counts and the current tab.
@@ -167,10 +168,10 @@ UUIDv7 PKs; `use PhoenixKit.SchemaPrefix` on every table-backed schema
 
 ## Testing
 
-- Test DB `phoenix_kit_user_connections_test` (`createdb` once), used only by the migration tests. `config/test.exs` configures `PhoenixKitUserConnections.Test.Repo` (`test/support/test_repo.ex`, sandboxed) and `config :phoenix_kit, repo:`; `test_helper.exs` builds the schema with core's `ensure_current/2`, replays `Migrations.up_statements/1` when the marker is behind, and excludes `:integration` when the database is unreachable (plus `:requires_module_chain_check` against a core without `ModuleChainCheck`).
+- Test DB `phoenix_kit_user_connections_test` (`createdb` once), used by the migration tests and the request-authorization test. `config/test.exs` configures `PhoenixKitUserConnections.Test.Repo` (`test/support/test_repo.ex`, sandboxed) and `config :phoenix_kit, repo:`; `test_helper.exs` builds the schema with core's `ensure_current/2`, replays `Migrations.up_statements/1` when the marker is behind, and excludes `:integration` when the database is unreachable (plus `:requires_module_chain_check` against a core without `ModuleChainCheck`).
 - Without a database, `mix test` still runs the behaviour test (`@phoenix_kit_module` attribute, callbacks, tab shape, `version/0` against `Mix.Project.config()[:version]`, `css_sources/0`), the core-pin guard (the `:phoenix_kit` requirement must admit every core from 2.22.3 and reject 2.22.2, 1.x and 3.x; a committed `path:` dep fails it), the SchemaPrefix guard and the migration-SQL test.
 - No `DataCase`, `LiveCase` or test Endpoint.
-- The business logic (follow/connect/block flows, auto-accept, block cleanup, history rows) and both LiveViews have no tests; verify them in a host.
+- `test/integration/connection_request_authorization_test.exs` covers who may accept, reject and cancel a request (sandboxed inline, users inserted directly). The rest of the business logic (follow/block flows, auto-accept, block cleanup, history rows) and both LiveViews have no tests; verify them in a host.
 - PG env vars honoured: `PGUSER` (default `postgres`), `PGPASSWORD`, `PGHOST`, `PGDATABASE`, `PGPOOL`, `MIX_TEST_PARTITION`.
 
 ## Feature notes

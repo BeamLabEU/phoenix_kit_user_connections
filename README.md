@@ -30,8 +30,9 @@ PhoenixKitUserConnections.follow(current_user, other_user)
 # Request a mutual connection
 PhoenixKitUserConnections.request_connection(current_user, other_user)
 
-# Accept a connection request
-PhoenixKitUserConnections.accept_connection(connection)
+# Accept a connection request (only its recipient may; anyone else gets
+# {:error, :not_recipient}). reject_connection/2 takes the same arguments.
+PhoenixKitUserConnections.accept_connection(current_user, connection)
 
 # Block a user (removes existing follows/connections)
 PhoenixKitUserConnections.block(current_user, other_user, "reason")
@@ -46,6 +47,7 @@ PhoenixKitUserConnections.get_relationship(current_user, other_user)
 - Cannot follow/connect with yourself
 - Cannot follow/connect if blocked (either direction)
 - If A requests B while B has pending request to A, both are auto-accepted
+- Only the recipient of a request may accept or reject it; only its requester may cancel it
 - Blocking removes all existing follows and connections between the users
 
 ## License
