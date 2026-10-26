@@ -111,6 +111,13 @@ defmodule PhoenixKitUserConnections do
   @impl PhoenixKit.Module
   def migration_module, do: PhoenixKitUserConnections.Migrations
 
+  @doc """
+  The manifest of this module's tables, for `mix phoenix_kit.repair` and
+  `mix phoenix_kit.doctor`; see `PhoenixKitUserConnections.ExpectedSchema`.
+  """
+  # No `@impl`, so this compiles against a core that lacks the callback.
+  def expected_schema, do: PhoenixKitUserConnections.ExpectedSchema
+
   @impl PhoenixKit.Module
   def permission_metadata do
     %{
