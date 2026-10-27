@@ -19,10 +19,10 @@ defmodule PhoenixKitUserConnections.CorePinConformanceTest do
   2.0.0 squashed the migration chain to a V135 floor.
   """
 
-  @must_admit ["2.22.3", "2.23.0", "2.64.1", "2.99.4"]
-  @must_reject ["1.7.189", "1.7.236", "2.0.0", "2.22.2", "3.0.0"]
+  @must_admit ["2.65.0", "2.65.1", "2.99.4", "3.0.0", "3.9.9"]
+  @must_reject ["1.7.189", "1.7.236", "2.0.0", "2.22.2", "2.64.9", "4.0.0"]
 
-  test "the :phoenix_kit requirement admits every core >= 2.22.3 minor and nothing else" do
+  test "the :phoenix_kit requirement admits every core >= 2.65.0 minor and nothing else" do
     requirement = core_requirement()
 
     assert match?({:ok, _parsed}, Version.parse_requirement(requirement)),

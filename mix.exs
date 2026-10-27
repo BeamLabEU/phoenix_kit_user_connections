@@ -60,7 +60,9 @@ defmodule PhoenixKitUserConnections.MixProject do
       # 2.22.3, the first core with V188 (the three unique indexes this
       # module's chain adopts and its schemas name); compound form, so the
       # ceiling stays open across later 2.x minors.
-      {:phoenix_kit, ">= 2.22.3 and < 3.0.0"},
+      # Floor 2.65.0: the first core with the `file_references/0` and `expected_schema/0`
+      # callbacks this module implements (`@impl`). The ceiling is open through core 3.x.
+      {:phoenix_kit, ">= 2.65.0 and < 4.0.0"},
 
       # LiveView is needed for the admin pages.
       {:phoenix_live_view, "~> 1.1"},

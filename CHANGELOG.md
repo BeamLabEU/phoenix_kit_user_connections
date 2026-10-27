@@ -18,6 +18,8 @@ All notable changes to PhoenixKitUserConnections will be documented in this file
 
 ### Changed
 
+- **Core pin widened to `>= 2.65.0 and < 4.0.0`:** works with core 3.x (core 3.0 stops creating the module tables; this module's own chain builds its tables). The floor is the first core with the `file_references/0` and `expected_schema/0` callbacks, which now carry `@impl PhoenixKit.Module`.
+
 - Requires `phoenix_kit` `>= 2.22.3 and < 3.0.0` (was `~> 2.0`): 2.22.3 is the
   first core with V188, the unique indexes the schemas name and V1 adopts.
 

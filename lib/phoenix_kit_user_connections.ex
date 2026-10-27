@@ -115,7 +115,7 @@ defmodule PhoenixKitUserConnections do
   The manifest of this module's tables, for `mix phoenix_kit.repair` and
   `mix phoenix_kit.doctor`; see `PhoenixKitUserConnections.ExpectedSchema`.
   """
-  # No `@impl`, so this compiles against a core that lacks the callback.
+  @impl PhoenixKit.Module
   def expected_schema, do: PhoenixKitUserConnections.ExpectedSchema
 
   @impl PhoenixKit.Module
