@@ -2,7 +2,7 @@
 
 All notable changes to PhoenixKitUserConnections will be documented in this file.
 
-## 0.4.0 - 2026-11-13
+## 0.4.0 - 2026-10-27
 
 ### Added
 
