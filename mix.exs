@@ -56,13 +56,11 @@ defmodule PhoenixKitUserConnections.MixProject do
 
   defp deps do
     [
-      # PhoenixKit provides the Module behaviour and Settings API. The floor is
-      # 2.22.3, the first core with V188 (the three unique indexes this
-      # module's chain adopts and its schemas name); compound form, so the
-      # ceiling stays open across later 2.x minors.
-      # Floor 2.65.0: the first core with the `file_references/0` and `expected_schema/0`
-      # callbacks this module implements (`@impl`). The ceiling is open through core 3.x.
-      {:phoenix_kit, ">= 2.65.0 and < 4.0.0"},
+      # PhoenixKit provides the Module behaviour and Settings API.
+      # Floor 3.5.0, ceiling open through every core 3.x. Compound form, never
+      # a three-segment `~>`, which would pin a single core minor (see
+      # test/core_pin_conformance_test.exs).
+      {:phoenix_kit, ">= 3.5.0 and < 4.0.0"},
 
       # LiveView is needed for the admin pages.
       {:phoenix_live_view, "~> 1.1"},

@@ -11,7 +11,7 @@ implements `PhoenixKit.Module` (`use PhoenixKit.Module`, so core auto-discovers
 it) and is the entire public API; the two LiveViews are thin callers of it.
 This is a library, not a standalone Phoenix app.
 
-- **Depends on:** `phoenix_kit` `>= 2.22.3 and < 3.0.0` (Hex — 2.22.3 is the first core with V188, the three unique indexes this module's chain adopts; the compound form keeps the ceiling open across later 2.x minors), `phoenix_live_view` `~> 1.1`. No sibling modules.
+- **Depends on:** `phoenix_kit` `>= 3.5.0 and < 4.0.0` (Hex — floor 3.5.0; the compound form keeps the ceiling open through every core 3.x), `phoenix_live_view` `~> 1.1`. No sibling modules.
 - **Consumed by:** core only, guarded with `Code.ensure_loaded?/1` + `enabled?/0`: the admin user-details page's Connections tab (`followers_count/1`, `following_count/1`, `connections_count/1`, `pending_requests_count/1`, `list_blocked/1`) and the admin Modules page card (`get_config/0`, `module_stats/0`). No sibling module calls it.
 - **Admin surface:** one tab, `:admin_connections` at `/admin/connections` (group `:admin_modules`, priority 600, `match: :prefix`, permission `"connections"`): statistics plus the enable toggle. The user-facing LiveView `Web.UserConnections` ("My Connections", five tabs) ships in the package but is not routed by the module; see Conventions.
 - **Module key** `"connections"`; settings prefix `connections_`.
@@ -74,10 +74,9 @@ Repo-local aliases:
 ### Landmines
 
 - `Block.changeset/2` caps `reason` at 255 **with `count: :codepoints`** to match the column. Both halves are load-bearing: Postgres counts characters while Ecto's `validate_length/3` counts grapheme clusters by default, so 255 decomposed graphemes are 510 codepoints — accepted by a plain `max: 255` and refused by `character varying(255)` with `:string_data_right_truncation`, which is the crash the validation exists to prevent. Any new length validation on a column-backed field must read the column's real width AND count codepoints; the width is in `PhoenixKitUserConnections.Migrations`.
-- The three unique indexes the schemas name (`phoenix_kit_user_follows_unique_idx`, `phoenix_kit_user_blocks_unique_idx`, `phoenix_kit_user_connections_requester_recipient_uidx`) ship in **core's V188** (core 2.22.3), which removed duplicate rows before creating them; this module's V1 re-states them. The `:phoenix_kit` floor is 2.22.3 for that reason, and `core_pin_conformance_test.exs` holds it: against an older core the `unique_constraint/3` calls would be inert (a concurrent double follow or request inserts two rows) and V1's `CREATE UNIQUE INDEX IF NOT EXISTS` would meet the duplicates and fail.
+- The three unique indexes the schemas name (`phoenix_kit_user_follows_unique_idx`, `phoenix_kit_user_blocks_unique_idx`, `phoenix_kit_user_connections_requester_recipient_uidx`) ship in **core's V188** (core 2.22.3), which removed duplicate rows before creating them; this module's V1 re-states them. The `:phoenix_kit` floor (3.5.0, held by `core_pin_conformance_test.exs`) is well past it.
 - **Follows and blocks are DIRECTED; connections are UNDIRECTED**, and their indexes differ accordingly. A follow or block indexes the ordered pair, because A→B and B→A are two different relationships. A connection is ONE relationship stored in whichever direction it was asked, so its index is an expression index on `LEAST`/`GREATEST` of the pair. An ordered index there would permit the mutual-click race — two users connecting to each other at the same instant, both passing the pre-checks, both inserting — which leaves a pending row alive between two already-connected users, survives `remove_connection/2` (it deletes only the accepted row), and can make `get_accepted_connection/2`'s `Repo.one/1` raise. Never "tidy" the three onto one shape.
 - **A pair conflict is reconciled, not reported.** `create_pending_connection/2` turns the pair index's violation into `:pair_exists`, and `reconcile_pair_conflict/2` re-reads the pair and returns what the caller would have got a moment later — usually the auto-accept. So the losing side of a mutual click still ends up connected instead of seeing "has already been taken". One retry only: the winner's row is committed and the index means the pair can never hold a second row.
-- `<.nav_tabs>` with `:patch`/`:badge_class` needs core 2.13.5+ at runtime; against an older core it compiles and renders a strip of dead buttons. The 2.22.3 floor covers it.
 - `/profile/connections` is assumed by the template, not registered by the module; a host that mounts `Web.UserConnections` anywhere else gets a tab strip that patches to a 404.
 - Only the migration tests touch the database; a change to a query or changeset is unverified until exercised in a host.
 - `function_exported?/3` answers **false for a module that is merely not loaded**, not only for one missing the function, so a bare callback assertion fails intermittently under a random seed and never when run alone — the shape that reads as flaky infrastructure and gets re-run instead of fixed. The behaviour test's `setup_all` calls `Code.ensure_loaded!/1`; any new `function_exported?` assertion must be covered by it.
@@ -158,7 +157,7 @@ core's chain, then a generated wrapper calling `up(prefix:, version:)`.
   table** (`migrations_test.exs` asserts no emitted statement matches
   `DROP|TRUNCATE|DELETE`).
 - **Proof the chain stands alone:** `test/integration/migrations_build_alone_test.exs`
-  runs core's `PhoenixKit.TestSupport.ModuleChainCheck` (core after 2.64.1).
+  runs core's `PhoenixKit.TestSupport.ModuleChainCheck`.
   `test/phoenix_kit_user_connections/migrations_test.exs` pins every table,
   index and constraint name, each FK's delete action and prefix threading, and
   checks the statements against core's manifest.
@@ -169,7 +168,7 @@ UUIDv7 PKs; `use PhoenixKit.SchemaPrefix` on every table-backed schema
 ## Testing
 
 - Test DB `phoenix_kit_user_connections_test` (`createdb` once), used by the migration tests and the request-authorization test. `config/test.exs` configures `PhoenixKitUserConnections.Test.Repo` (`test/support/test_repo.ex`, sandboxed) and `config :phoenix_kit, repo:`; `test_helper.exs` builds the schema with core's `ensure_current/2`, replays `Migrations.up_statements/1` when the marker is behind, and excludes `:integration` when the database is unreachable (plus `:requires_module_chain_check` against a core without `ModuleChainCheck`).
-- Without a database, `mix test` still runs the behaviour test (`@phoenix_kit_module` attribute, callbacks, tab shape, `version/0` against `Mix.Project.config()[:version]`, `css_sources/0`), the core-pin guard (the `:phoenix_kit` requirement must admit every core from 2.22.3 and reject 2.22.2, 1.x and 3.x; a committed `path:` dep fails it), the SchemaPrefix guard and the migration-SQL test.
+- Without a database, `mix test` still runs the behaviour test (`@phoenix_kit_module` attribute, callbacks, tab shape, `version/0` against `Mix.Project.config()[:version]`, `css_sources/0`), the core-pin guard (the `:phoenix_kit` requirement must admit every core 3.x from 3.5.0 and reject anything below it and 4.x; a committed `path:` dep fails it), the SchemaPrefix guard and the migration-SQL test.
 - No `DataCase`, `LiveCase` or test Endpoint.
 - `test/integration/connection_request_authorization_test.exs` covers who may accept, reject and cancel a request (sandboxed inline, users inserted directly). The rest of the business logic (follow/block flows, auto-accept, block cleanup, history rows) and both LiveViews have no tests; verify them in a host.
 - PG env vars honoured: `PGUSER` (default `postgres`), `PGPASSWORD`, `PGHOST`, `PGDATABASE`, `PGPOOL`, `MIX_TEST_PARTITION`.
